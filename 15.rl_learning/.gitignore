@@ -1,0 +1,9 @@
+.data/price/
+.idea/
+.venv/
+*.iml
+/.idea/
+/venv/
+/stockdata/
+/result/
+/log/
