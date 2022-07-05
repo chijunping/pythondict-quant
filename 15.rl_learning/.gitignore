@@ -4,6 +4,6 @@
 *.iml
 /.idea/
 /venv/
-/stockdata/
-/result/
+#/stockdata/
+#/result/
 /log/
