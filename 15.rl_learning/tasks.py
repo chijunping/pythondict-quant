@@ -49,7 +49,7 @@
 #                 return os.path.join(root, fname)
 #
 #
-# def stock_trade(code, new_model=False):
+# def train_and_test(code, new_model=False):
 #     stock_file = find_file('./stockdata/train', str(code))
 #     model_path = "./result/model/" + code
 #     day_profits = []

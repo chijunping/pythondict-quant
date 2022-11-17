@@ -17,7 +17,7 @@ MAX_DAY_CHANGE = 1
 INITIAL_ACCOUNT_BALANCE = 10000
 
 # obs的字段数量
-column_num = 34
+column_num = None
 
 
 class StockTradingEnv(gym.Env):
@@ -26,47 +26,37 @@ class StockTradingEnv(gym.Env):
 
     def __init__(self, df):
         super(StockTradingEnv, self).__init__()
-
         self.df = df
         self.reward_range = (0, MAX_ACCOUNT_BALANCE)
 
         # Actions of the format Buy x%, Sell x%, Hold, etc.
         self.action_space = spaces.Box(
-            low=np.array([0, 0]), high=np.array([3, 1]), dtype=np.float16)
+            low=np.array([0, 0]), high=np.array([3, 1]), dtype=np.float32)
 
         # Prices contains the OHCL values for the last five prices
-        self.observation_space = spaces.Box(low=0, high=1, shape=(column_num,), dtype=np.float16)
+        self.observation_space = spaces.Box(low=0, high=1, shape=(df.shape[1] + 6,), dtype=np.float32)
 
     def _next_observation(self):
+        columns = list(self.df.columns.values)
         obs = np.array([
+
             self.df.loc[self.current_step, 'open'] / MAX_SHARE_PRICE,
             self.df.loc[self.current_step, 'high'] / MAX_SHARE_PRICE,
             self.df.loc[self.current_step, 'low'] / MAX_SHARE_PRICE,
             self.df.loc[self.current_step, 'close'] / MAX_SHARE_PRICE,
             self.df.loc[self.current_step, 'volume'] / MAX_VOLUME,
-            self.df.loc[self.current_step, 'amount'] / MAX_AMOUNT,
-            self.df.loc[self.current_step, 'adjustflag'] / 10,
-            self.df.loc[self.current_step, 'tradestatus'] / 1,
-            self.df.loc[self.current_step, 'pctChg'] / 100,
-            self.df.loc[self.current_step, 'peTTM'] / 1e4,
-            self.df.loc[self.current_step, 'pbMRQ'] / 100,
-            self.df.loc[self.current_step, 'psTTM'] / 100,
-            self.df.loc[self.current_step, 'pctChg'] / 1e3,
-            self.df.loc[self.current_step, 'ma5'] / 100,
-            self.df.loc[self.current_step, 'ma10'] / 100,
-            self.df.loc[self.current_step, 'ma20'] / 100,
+            self.df.loc[self.current_step, 'turn'],
+            self.df.loc[self.current_step, 'sar'] / MAX_SHARE_PRICE,
+            self.df.loc[self.current_step, 'ma5'] / MAX_SHARE_PRICE,
+            self.df.loc[self.current_step, 'ma10'] / MAX_SHARE_PRICE,
+            self.df.loc[self.current_step, 'ma20'] / MAX_SHARE_PRICE,
             self.df.loc[self.current_step, 'k'] / 100,
             self.df.loc[self.current_step, 'd'] / 100,
             self.df.loc[self.current_step, 'j'] / 100,
-            self.df.loc[self.current_step, 'ma5_0_signal'],
-            self.df.loc[self.current_step, 'ma10_0_signal'],
-            self.df.loc[self.current_step, 'ma20_0_signal'],
-            self.df.loc[self.current_step, 'ma5_ma10_signal'],
-            self.df.loc[self.current_step, 'ma5_ma20_signal'],
-            self.df.loc[self.current_step, 'kd_cross_signal'],
-            self.df.loc[self.current_step, 'macd'],
-            self.df.loc[self.current_step, 'macdsignal'],
-            self.df.loc[self.current_step, 'macdhist'],
+            self.df.loc[self.current_step, 'talib_diff'],
+            self.df.loc[self.current_step, 'talib_dea'],
+            self.df.loc[self.current_step, 'talib_macd'],
+
             self.balance / MAX_ACCOUNT_BALANCE,
             self.max_net_worth / MAX_ACCOUNT_BALANCE,
             self.shares_held / MAX_NUM_SHARES,
@@ -134,7 +124,7 @@ class StockTradingEnv(gym.Env):
 
         return obs, reward, done, {}
 
-    def reset(self, new_df=None):
+    def reset(self):
         # Reset the state of the environment to an initial state
         self.balance = INITIAL_ACCOUNT_BALANCE
         self.net_worth = INITIAL_ACCOUNT_BALANCE
@@ -145,8 +135,8 @@ class StockTradingEnv(gym.Env):
         self.total_sales_value = 0
 
         # pass test dataset to environment
-        if new_df:
-            self.df = new_df
+        # if new_df:
+        #     self.df = new_df
 
         # Set the current step to a random point within the data frame
         # self.current_step = random.randint(
